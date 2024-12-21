@@ -1,4 +1,5 @@
 from datetime import datetime
+from id_generator import id_generator
 
 '''
 Додаток, який буде зберігати нотатки
@@ -21,12 +22,16 @@ if note_data_one["creation_date"] > note_data_one["creation_date"]:
 1) Створити словник нотаток та записати в нього інформацію
 2) Написати функцію, яка буде виводити нотатку
 3) Написати функцію, яка буде виводити усі нотатки
-2) Написати цикл, який буде отримувати інформацію від користувача та реагувати на неї
+4) Написати цикл, який буде отримувати інформацію від користувача та реагувати на неї
+
+5) Пофіксити проблему, де в нас є глобальна змінна
+6)
 
 '''
 
-note_list = [] # [{"creation_date": "19.12.2024 20:15", "text": "This is my note, that I am taking on my laptop"}]
+note_list = [] # [{"creation_date": "19.12.2024 20:15", "text": "This is my note, that I am taking on my laptop", id: 1}]
 note_file = "notes.txt"
+note_id_generator = id_generator()
 
 # Hello note;19.12.2024 20:15
 
@@ -48,38 +53,59 @@ commands = '''
 
 def add_new_note(note_text) -> bool:
     note_creation_date = datetime.today()
-    note_list.append({"text": note_text, "creation_date": note_creation_date})
+    next_id = note_id_generator()
+    note_list.append({"text": note_text, "creation_date": note_creation_date, "id": next_id})
     return True
 
 def print_note(index: int):
     note = note_list[index]
-    # 19.12.2024 20:15 dd.mm.yyyy hh:mm
-    formatted_creation_date = note["creation_date"].strftime("%d.%m.%Y %H:%M") # str f time -> string format time
-    # strptime str p time string parse time
-    print(f'"{note["text"]}"\n- Created on {formatted_creation_date}\n')
+    formatted_creation_date = note["creation_date"].strftime("%d.%m.%Y %H:%M")
+    print(f'{note["id"]}: "{note["text"]}"\n- Created on {formatted_creation_date}\n')
 
 def print_all_notes():
     for note_index in range(len(note_list)):
         print_note(note_index)
 
+def find_top_note_id(notes: list[dict]) -> int:
+    max_id = 0
+    for note in notes:
+        note_id = note['id']
+        if note_id > max_id:
+            max_id = note_id
+    return max_id
+
+# def find_top_note_id_functional(notes: list[dict]) -> int:
+#     note_ids = []
+#     for note in notes:
+#         note_ids.append(note['id'])
+#     return max(note_ids)
+
+def find_top_note_id_functional(notes: list[dict]) -> int:
+    return max([note['id'] for note in notes] + [0])
+
 def save_notes():
     with open(note_file, 'w') as file:
         for note in note_list:
-            file.write(f'{note["text"]};{note["creation_date"]}\n')
+            file.write(f'{note['id']};{note["text"]};{note["creation_date"]}\n')
 
 def read_notes() -> list[dict]:
     note_list = []
     with open(note_file) as file:
         for line in file:
             # Hello note;2024-12-19 21:18:14.531695
-            text, date = line.strip().split(';')
+            id, text, date = line.strip().split(';')
             creation_date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f")
-            note_list.append({"text": text, "creation_date": creation_date})
+            note_list.append({"id": int(id), "text": text, "creation_date": creation_date})
     return note_list
 
 def init():
     global note_list
     note_list = read_notes()
+
+    max_note_id = find_top_note_id_functional(note_list)
+
+    global note_id_generator
+    note_id_generator = id_generator(max_note_id)
 
     print(welcome_banner)
     print("\nHello and welcome to our app!\n")
@@ -107,30 +133,8 @@ def main():
                 print("Please enter a valid note number")
                 continue
             print_note(index)
-# text = input("Please enter note text: ")
-# add_new_note(text)
-# add_new_note(text)
-# add_new_note(text)
-# add_new_note(text)
-
-# print_all_notes()
-# Ctrl c
+        elif command == 'print_all':
+            print_all_notes()
 
 init()
 main()
-
-
-
-# "  add_note 1  ".strip()
-# "add_note 1"split(' ')
-# command, *args = ["add_note", "1"]
-# command = "add_note"
-# args = ["1"]
-
-
-# lst = [2, 1, 2, 3, 4]
-
-# first, *second = lst
-
-# print(first)
-# print(second)
